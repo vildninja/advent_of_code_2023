@@ -38,10 +38,12 @@ fn main() {
             let numbers = line.split_whitespace().filter_map(to_i64).collect::<Vec<_>>();
 
             // println!("Line: '{line}'");
-            if numbers.len() == 3 {
+            // if numbers.len() == 3 {
+            if let [dst, src, len] = numbers[..] {
                 if let Some((name, map)) = maps.last_mut() {
                     println!("Found {name} {numbers:?}");
-                    map.push((numbers[0]..numbers[0] + numbers[2], numbers[1]..numbers[1] + numbers[2]));
+                    map.push((dst..dst + len, src..src + len));
+                    // map.push((numbers[0]..numbers[0] + numbers[2], numbers[1]..numbers[1] + numbers[2]));
                 }
             }
             else if line.ends_with(" map:") {
