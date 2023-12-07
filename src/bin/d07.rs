@@ -6,7 +6,7 @@ fn main() {
     let mut hands = lines.filter_map(|line| {
         let mut words = line.split_whitespace();
         if let (Some(cards_str), Some(Ok(bid))) = (words.next(), words.next().map(|bid| bid.parse::<u32>())) {
-            let mut cards = cards_str.chars().fold((0u32, [(0, 0); 4]), |(num, mut combo), c| {
+            let (cards, mut combo) = cards_str.chars().fold((0u32, [(0, 0); 4]), |(num, mut combo), c| {
                 let new_card = c.to_digit(10).or_else(|| {
                     match c {
                         'A' => Some(14),
@@ -26,10 +26,10 @@ fn main() {
                 ((num << 4) + new_card, combo)
             });
 
-            cards.1.sort_by_key(|(_, count)| *count);
-            let combo_type: u32 = match cards.1[2..4] {
-                [(_, 2), (_, n)] => n * 0x10 + 0x02,
-                [(_, _), (_, n)] => n * 0x10,
+            combo.sort_by_key(|(_, count)| *count);
+            let combo_type: u32 = match combo {
+                [.., (_, 2), (_, n)] => n * 0x10 + 0x02,
+                [.., (_, n)]         => n * 0x10,
                 // [_, (_, 5)] => 7,
                 // [_, (_, 4)] => 6,
                 // [(_, 2), (_, 3)] => 5,
@@ -37,10 +37,9 @@ fn main() {
                 // [(_, 2), (_, 2)] => 3,
                 // [_, (_, 2)] => 2,
                 // _ => 1,
-                _ => 0,
             };
 
-            Some(((combo_type << 24) + cards.0, bid))
+            Some(((combo_type << 24) + cards, bid))
         }
         else { None }
     }).collect::<Vec<_>>();
@@ -87,15 +86,14 @@ fn main() {
             });
 
             combo.sort_by_key(|(_, count)| *count);
-            let combo_type: u32 = match combo[2..4] {
+            let combo_type: u32 = match combo {
                 // can never happen with jokers
                 // [(_, 2), (_, 3)] if jokers == 0 => 3 * 0x10 + 0x02,
                 // can never happen with more than one joker
                 // [(_, 2), (_, 2)] if jokers <= 1 => 2 * 0x10 + 0x02 + jokers * 0x10,
 
-                [(_, 2), (_, n)] => n * 0x10 + 0x02 + jokers * 0x10,
-                [(_, _), (_, n)] => n * 0x10 + jokers * 0x10,
-                _ => 0,
+                [.., (_, 2), (_, n)] => n * 0x10 + 0x02 + jokers * 0x10,
+                [.., (_, n)]         => n * 0x10 + jokers * 0x10,
             };
 
 
