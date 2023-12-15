@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 regex = "1.10.2"
 prime_factorization = "1.0.4"
+itertools = "0.10.5"
