@@ -85,7 +85,7 @@ fn main() {
     const MAX_STRAIGHT: u8 = 10;
 
     let mut queue = BinaryHeap::new();
-    let mut cost_map = vec![1000000u32; map.len()];
+    // let mut cost_map = vec![1000000u32; map.len()];
 
     // only visit each combo once: (index, dir, straight)
     let mut visisted = HashSet::new();
@@ -105,63 +105,66 @@ fn main() {
 
     let mut iter_counter = 0;
 
-    while let Some(step) = queue.pop() {
-        iter_counter += 1;
+    let result = loop {
+        if let Some(step) = queue.pop() {
+            iter_counter += 1;
 
-        if iter_counter % 10000 == 0 {
-            println!("Traversing {iter_counter} iters. found {} nodes", visisted.len());
-        }
+            if iter_counter % 10000 == 0 {
+                println!("Traversing {iter_counter} iters. found {} nodes", visisted.len());
+            }
 
-        let index = step.index as usize;
-        // if cost_map[index] + WORST_CASE < step.cost {
-        //     continue;
-        // }
+            let index = step.index as usize;
+            // if cost_map[index] + WORST_CASE < step.cost {
+            //     continue;
+            // }
 
-        if index + 1 == map.len() &&
-            step.straight >= MIN_STRAIGHT {
-            break;
-        }
+            if index + 1 == map.len() && step.straight >= MIN_STRAIGHT {
+                break Some(step);
+            }
 
-        let mut push_next = |dir: u8, straight: u8| {
-            if let Some(i) = next_index(index, dir, width, map.len()) {
-                let cost = step.cost + map[i] as u32;
-                if /*cost_map[i] + WORST_CASE >= cost &&*/
+            let mut push_next = |dir: u8, straight: u8| {
+                if let Some(i) = next_index(index, dir, width, map.len()) {
+                    let cost = step.cost + map[i] as u32;
+                    if /*cost_map[i] + WORST_CASE >= cost &&*/
                     // visisted.insert((i << 16) as u32 | ((straight as u32) << 8) | dir as u32) {
                     visisted.insert((i as u16, straight, dir)) {
 
-                    if straight >= MIN_STRAIGHT {
-                        cost_map[i] = u32::min(cost_map[i], cost);
-                    }
+                        // if straight >= MIN_STRAIGHT {
+                        //     cost_map[i] = u32::min(cost_map[i], cost);
+                        // }
 
-                    queue.push(Step {
-                        straight,
-                        dir,
-                        index: i as u16,
-                        cost,
-                    });
+                        queue.push(Step {
+                            straight,
+                            dir,
+                            index: i as u16,
+                            cost,
+                        });
+                    }
+                }
+            };
+
+            if step.straight < MAX_STRAIGHT {
+                push_next(step.dir, step.straight + 1);
+            }
+
+            if step.straight >= MIN_STRAIGHT {
+                match step.dir {
+                    NORTH | SOUTH => {
+                        push_next(WEST, 1);
+                        push_next(EAST, 1);
+                    },
+                    WEST | EAST => {
+                        push_next(NORTH, 1);
+                        push_next(SOUTH, 1);
+                    },
+                    _ => {}
                 }
             }
-        };
-
-        if step.straight < MAX_STRAIGHT {
-            push_next(step.dir, step.straight + 1);
+        } else {
+            break None;
         }
-
-        if step.straight >= MIN_STRAIGHT {
-            match step.dir {
-                NORTH | SOUTH => {
-                    push_next(WEST, 1);
-                    push_next(EAST, 1);
-                },
-                WEST | EAST => {
-                    push_next(NORTH, 1);
-                    push_next(SOUTH, 1);
-                },
-                _ => {}
-            }
-        }
-    }
+    };
 
     println!("Traversed graph in {iter_counter} iters. Found {} nodes. Cost is {}",
-             visisted.len(), cost_map.last().unwrap());
+             visisted.len(), result.unwrap().cost);
 }
